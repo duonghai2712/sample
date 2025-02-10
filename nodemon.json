@@ -1,0 +1,7 @@
+{
+    "verbose": true,
+    "ignore": ["*.test.ts", "src/proto_dist"],
+    "ext": "ts",
+    "watch": ["src"],
+    "exec": "sh ./scripts/build.sh"
+}
