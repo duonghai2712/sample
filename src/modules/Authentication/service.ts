@@ -6,7 +6,6 @@ import {Authentication} from "./type";
 import {userModel} from "../User/model";
 import {tokenModel} from "./model";
 import {getConfig} from "../../libs/getConfig";
-import {dbConn} from "../../libs/dbConnect";
 import {User} from "../User/type";
 
 const quickHandler = getQuickCrud<User.UserT>({ Model: userModel });
@@ -30,7 +29,7 @@ export const authService: Authentication.serviceType = {
         const user = await userModel.findOne({ $or: [ { phone: username }, { email: username } ]});
         if (!user || user.password !== helper.genMd5(password)) throw MyError.NotAuthentication("Tài khoản hoặc mật khẩu không chính xác");
         if(user.status !== STATUS.ACTIVE) throw MyError.NotAuthentication("Tài khoản đã bị vô hiệu hóa");
-        return authService.getTokens({ user: user.toJSON() });
+        return await authService.getTokens({ user: user.toJSON() });
     },
     async getUserInfo(params){
         const { user } = params;
@@ -46,9 +45,10 @@ export const authService: Authentication.serviceType = {
         if (!decode) throw MyError.NotAuthentication("Sai refreshToken");
 
         const user  = await userModel.findById(helper.getMongoId(decode.userId));
+        if(!user) throw MyError.NotFound("Không tìm thấy người dùng");
 
         await tokenModel.updateMany({ sessionId: token.sessionId, userId: user._id, _status: 1 }, { _status: -1 });
-        return authService.getTokens({ user: user.toJSON() });
+        return await authService.getTokens({ user: user.toJSON() });
     },
     async logout(params){
         const { user } = params;
@@ -61,20 +61,10 @@ export const authService: Authentication.serviceType = {
         const recordInDb = await userModel.findById(user.id);
         if(!recordInDb) throw MyError.NotFound("Không tìm thấy người dùng");
         if(recordInDb.password !== helper.genMd5(oldPassword)) throw MyError.NotValidate("Mật khẩu cũ không chính xác");
-        const session = await dbConn.startSession();
-        try {
-            session.startTransaction();
-            const result = await quickHandler.update({ id: String(user.id), record: { password: helper.genMd5(newPassword) }, user, session });
-            await tokenModel.updateMany({userId: user.id, _status: 1}, { _status: -1 });
-            await session.commitTransaction();
-            return result;
-        } catch (e) {
-            await session.abortTransaction();
-            console.log(e);
-            throw MyError.ServiceUnavailable("Cập nhật tài khoản thất bại");
-        } finally {
-            await session.endSession();
-        }
+
+        const result = await quickHandler.update({ id: String(user.id), record: { password: helper.genMd5(newPassword) }, user });
+        await tokenModel.updateMany({userId: user.id, _status: 1}, { _status: -1 });
+        return result;
     }
 };
 

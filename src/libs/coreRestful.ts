@@ -220,7 +220,7 @@ export namespace CrudQuick {
     export type func_all<T1> = (params?: listParams) => allOut<T1>;
     export type func_create<T1> = (params: recordCreate) => recordRes<T1>;
     export type func_getById<T1> = (params: recordFind) => recordRes<T1>;
-    export type func_delete<T1> = (params: recordFind) => recordRes<T1>;
+    export type func_delete<T1> = (params: recordDelete) => recordRes<T1>;
     export type func_update<T1> = (params: recordUpdate) => recordRes<T1>;
 
     export type Service<T1> = {

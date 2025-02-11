@@ -1,0 +1,12 @@
+.idea
+.vscode
+node_modules
+yarn-error.log
+*.log
+dist
+.DS_Store
+coverage
+data/demo
+data/input
+logs
+tmp

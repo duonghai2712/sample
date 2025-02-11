@@ -1,6 +1,5 @@
 import { ObjectId } from "mongoose";
 import { T__Response } from '../../libs/typeReq';
-import {User} from "../User/type";
 
 declare namespace Authentication {
     type TokenT = {
